@@ -66,5 +66,14 @@ def get_user(id):
     user = User.query.get(id)
     return user_schema.jsonify(user)
 
+@app.route('/login', methods=['POST'])
+def login():
+    nama = request.json['nama']
+    passwd = request.json['passwd']
+    
+    user = User.query.filter_by(nama=nama).first()
+    if nama == user.nama and passwd == user.passwd:
+        return user_schema.jsonify(user)
+
 if __name__ == '__main__':
     app.run(debug=True)
