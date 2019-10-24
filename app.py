@@ -25,17 +25,16 @@ class User(db.Model):
     passwd = db.Column(db.String(36))
     email = db.Column(db.Integer())
     telepon = db.Column(db.Integer())
-    saldo = db.Column(db.Integer())
-    activity_id = db.Column(db.Integer, db.ForeignKey('activity.id'),
-        nullable=False)
+    saldo = db.Column(db.Integer(), nullable=True)
+    activities = db.relationship('Activity', backref='owner')
     
-    def __init__(self, username, passwd, email, telepon, saldo, activity_id):
+    def __init__(self, username, passwd, email, telepon, saldo, activities):
         self.username = username
         self.passwd = passwd
         self.email = email
         self.telepon = telepon
         self.saldo = saldo
-        self.activity_id = activity_id
+        self.activities = activities
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,27 +43,30 @@ class Activity(db.Model):
     date_time = db.Column(db.DateTime, nullable=False,
         default=datetime.utcnow)
     nominal = db.Column(db.Integer())
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+        nullable=False)
 
-    def __init__(self, activity_name, tipe, date_time, nominal):
+    def __init__(self, activity_name, tipe, date_time, nominal, owner_id):
         self.activity_name = activity_name
         self.tipe = tipe
         self.date_time = date_time
         self.nominal = nominal
+        self.owner_id = owner_id
 
 # Product Schema
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'username', 'passwd', 'email', 'telepon', 'saldo', 'activity_id')
+        fields = ('id', 'username', 'passwd', 'email', 'telepon', 'saldo', 'activities')
 
 class ActivitySchema(ma.Schema):
     class Meta:
-        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal')
+        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal', 'owner_id')
 
 # Init schema
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
-activity_schema = Activity()
-activitys_schema = Activity(many=True)
+activity_schema = ActivitySchema()
+activitys_schema = ActivitySchema(many=True)
 
 # Create a User
 @app.route('/daftar', methods=['POST'])
@@ -97,6 +99,13 @@ def login():
     user = User.query.filter_by(username=username).first()
     if username == user.username and passwd == user.passwd:
         return user_schema.jsonify(user)
+
+## Scan
+@app.route('/scan', methods=['POST'])
+def scan():
+    code = request.json('code')
+    
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
