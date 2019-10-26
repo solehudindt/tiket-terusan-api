@@ -24,7 +24,7 @@ class User(db.Model):
     username = db.Column(db.String(25), unique=True)
     passwd = db.Column(db.String(36))
     email = db.Column(db.Integer())
-    telepon = db.Column(db.Integer())
+    telepon = db.Column(db.Integer(), nullable=True)
     saldo = db.Column(db.Integer(), nullable=True)
     activities = db.relationship('Activity', backref='owner')
     
@@ -46,21 +46,26 @@ class Activity(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
         nullable=False)
 
-    def __init__(self, activity_name, tipe, date_time, nominal, owner_id):
+    def __init__(self, activity_name, tipe, date_time, nominal, owner):
         self.activity_name = activity_name
         self.tipe = tipe
         self.date_time = date_time
         self.nominal = nominal
         self.owner_id = owner_id
 
+class Wahana(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    wahana = db.Column(db.String(15))
+    harga = db.Column(db.Integer())
+
 # Product Schema
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'username', 'passwd', 'email', 'telepon', 'saldo', 'activities')
+        fields = ('id', 'username', 'passwd', 'email', 'telepon', 'saldo')
 
 class ActivitySchema(ma.Schema):
     class Meta:
-        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal', 'owner_id')
+        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal', 'owner')
 
 # Init schema
 user_schema = UserSchema()
@@ -93,19 +98,28 @@ def get_user(id):
 ## Login
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.json['username']
+    iden = request.json['telp/email']
     passwd = request.json['passwd']
     
-    user = User.query.filter_by(username=username).first()
-    if username == user.username and passwd == user.passwd:
+    user = User.query.filter_by(telepon=telepon).first()
+    if iden == user.telepon or iden == user.email and passwd == user.passwd:
         return user_schema.jsonify(user)
 
 ## Scan
 @app.route('/scan', methods=['POST'])
 def scan():
-    code = request.json('code')
-    
-    
+    nama_w = request.json['wahana']
+    user_id = request.json['id']
+
+    wahana = Wahana.query.filter_by(wahana=nama_w).first()
+    user = User.query.get(id)
+    tipe = 'debet'
+    date_time = datetime.now()
+    nominal = wahana.harga
+
+    new_act = Activity(nama_w,tipe,date_time,nominal,user.username)
+    db.session.add(new_act)
+    db.session.commit()
 
 if __name__ == '__main__':
     app.run(debug=True)
