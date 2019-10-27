@@ -9,7 +9,8 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ge3k@localhost/terusan'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:ge3k@localhost/terusan'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Init db
@@ -23,25 +24,23 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(25), unique=True)
     passwd = db.Column(db.String(36))
-    email = db.Column(db.Integer())
+    email = db.Column(db.String(40), unique=True)
     telepon = db.Column(db.Integer(), nullable=True)
-    saldo = db.Column(db.Integer(), nullable=True)
+    saldo = db.Column(db.Integer(), default=0)
     activities = db.relationship('Activity', backref='owner')
     
-    def __init__(self, username, passwd, email, telepon, saldo, activities):
+    def __init__(self, username, passwd, email, telepon):
         self.username = username
         self.passwd = passwd
         self.email = email
         self.telepon = telepon
-        self.saldo = saldo
-        self.activities = activities
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     activity_name = db.Column(db.String(35))
     tipe = db.Column(db.String(6))
-    date_time = db.Column(db.DateTime, nullable=False,
-        default=datetime.utcnow)
+    date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    #date_time = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
     nominal = db.Column(db.Integer())
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
         nullable=False)
@@ -51,7 +50,7 @@ class Activity(db.Model):
         self.tipe = tipe
         self.date_time = date_time
         self.nominal = nominal
-        self.owner_id = owner_id
+        self.owner = owner
 
 class Wahana(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,6 +72,13 @@ users_schema = UserSchema(many=True)
 activity_schema = ActivitySchema()
 activitys_schema = ActivitySchema(many=True)
 
+@app.route('/')
+def index():
+    x = {
+        "status":"running"
+    }
+    return jsonify(x)
+
 # Create a User
 @app.route('/daftar', methods=['POST'])
 def add_user():
@@ -80,9 +86,8 @@ def add_user():
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
-    saldo = request.json['saldo']
     
-    new_user = User(username, passwd, email, telepon, saldo)
+    new_user = User(username, passwd, email, telepon)
     
     db.session.add(new_user)
     db.session.commit()
@@ -101,7 +106,7 @@ def login():
     iden = request.json['telp/email']
     passwd = request.json['passwd']
     
-    user = User.query.filter_by(telepon=telepon).first()
+    user = User.query.filter_by(telepon=iden,email=iden).first()
     if iden == user.telepon or iden == user.email and passwd == user.passwd:
         return user_schema.jsonify(user)
 
@@ -111,15 +116,17 @@ def scan():
     nama_w = request.json['wahana']
     user_id = request.json['id']
 
-    wahana = Wahana.query.filter_by(wahana=nama_w).first()
-    user = User.query.get(id)
+    whn = Wahana.query.filter_by(wahana=nama_w).first()
+    user = User.query.get(user_id)
     tipe = 'debet'
-    date_time = datetime.now()
-    nominal = wahana.harga
+    date = datetime.now()
+    nominal = whn.harga
 
-    new_act = Activity(nama_w,tipe,date_time,nominal,user.username)
+    new_act = Activity(whn.wahana,tipe,date,nominal,user)
     db.session.add(new_act)
     db.session.commit()
+
+    return "succes"
 
 if __name__ == '__main__':
     app.run(debug=True)
