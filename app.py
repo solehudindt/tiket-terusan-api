@@ -9,8 +9,8 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Database
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:ge3k@localhost/terusan'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ge3k@localhost/terusan'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Init db
@@ -64,7 +64,7 @@ class UserSchema(ma.Schema):
 
 class ActivitySchema(ma.Schema):
     class Meta:
-        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal', 'owner')
+        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal')
 
 # Init schema
 user_schema = UserSchema()
@@ -94,11 +94,45 @@ def add_user():
     
     return user_schema.jsonify(new_user)
 
+@app.route('/topup', methods=['POST'])
+def topup():
+    username = request.json['username']
+    nominal = request.json['nominal']
+
+    user = User.query.filter_by(username=username).first()
+    tipe = 'credit'
+    date = datetime.now()
+
+    new_act = Activity(activity_name="topup",tipe=tipe,date_time=date,nominal=nominal,owner=user)
+    db.session.add(new_act)
+    db.session.commit()
+
+    x = {
+        "status":"success"
+    }
+    return jsonify(x)
+
+
 ## Get user
 @app.route('/user/<id>', methods=['GET'])
 def get_user(id):
     user = User.query.get(id)
     return user_schema.jsonify(user)
+
+@app.route('/history/<id>', methods=['GET'])
+def get_history(id):
+    user = User.query.get(id)
+    act = {}
+    for i in range(len(user.activities)):
+        counter = 0
+        for x in user.activities:
+            act[counter] = {"activity_name":x.activity_name,
+                        "tipe":x.tipe,
+                        "date_time":x.date_time,
+                        "nominal":x.nominal}
+            counter = counter + 1
+
+    return jsonify(act)
 
 ## Login
 @app.route('/login', methods=['POST'])
@@ -106,8 +140,8 @@ def login():
     iden = request.json['telp/email']
     passwd = request.json['passwd']
     
-    user = User.query.filter_by(telepon=iden,email=iden).first()
-    if iden == user.telepon or iden == user.email and passwd == user.passwd:
+    user = User.query.filter_by(email=iden).first()
+    if iden == user.email and passwd == user.passwd:
         return user_schema.jsonify(user)
 
 ## Scan
@@ -126,7 +160,10 @@ def scan():
     db.session.add(new_act)
     db.session.commit()
 
-    return "succes"
+    x = {
+        "status":"success"
+    }
+    return jsonify(x)
 
 if __name__ == '__main__':
     app.run(debug=True)
