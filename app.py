@@ -144,10 +144,15 @@ def get_history(id):
 def login():
     iden = request.json['email']
     passwd = request.json['passwd']
+    x = {
+        "status":"email/password salah"
+    }
     
     user = User.query.filter_by(email=iden).first()
     if iden == user.email and passwd == user.passwd:
         return user_schema.jsonify(user)
+    else:
+        return jsonify(x)
 
 ## Scan
 @app.route('/scan', methods=['POST'])
