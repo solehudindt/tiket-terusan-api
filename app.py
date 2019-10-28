@@ -25,7 +25,7 @@ class User(db.Model):
     username = db.Column(db.String(25), unique=True)
     passwd = db.Column(db.String(36))
     email = db.Column(db.String(40), unique=True)
-    telepon = db.Column(db.Integer(), nullable=True)
+    telepon = db.Column(db.String(13), nullable=True)
     saldo = db.Column(db.Integer(), default=0)
     activities = db.relationship('Activity', backref='owner')
     
@@ -66,7 +66,7 @@ class ActivitySchema(ma.Schema):
     class Meta:
         fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal')
 
-# Init schema
+## Init schema
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 activity_schema = ActivitySchema()
@@ -79,7 +79,7 @@ def index():
     }
     return jsonify(x)
 
-# Create a User
+## Create a User
 @app.route('/daftar', methods=['POST'])
 def add_user():
     username = request.json['username']
@@ -94,17 +94,21 @@ def add_user():
     
     return user_schema.jsonify(new_user)
 
+## topup
 @app.route('/topup', methods=['POST'])
 def topup():
     username = request.json['username']
     nominal = request.json['nominal']
 
     user = User.query.filter_by(username=username).first()
-    tipe = 'credit'
+    tipe = 'kredit'
     date = datetime.now()
 
     new_act = Activity(activity_name="topup",tipe=tipe,date_time=date,nominal=nominal,owner=user)
     db.session.add(new_act)
+    db.session.commit()
+
+    user.saldo += nominal
     db.session.commit()
 
     x = {
@@ -119,6 +123,7 @@ def get_user(id):
     user = User.query.get(id)
     return user_schema.jsonify(user)
 
+## get history
 @app.route('/history/<id>', methods=['GET'])
 def get_history(id):
     user = User.query.get(id)
@@ -137,7 +142,7 @@ def get_history(id):
 ## Login
 @app.route('/login', methods=['POST'])
 def login():
-    iden = request.json['telp/email']
+    iden = request.json['email']
     passwd = request.json['passwd']
     
     user = User.query.filter_by(email=iden).first()
@@ -148,21 +153,30 @@ def login():
 @app.route('/scan', methods=['POST'])
 def scan():
     nama_w = request.json['wahana']
-    user_id = request.json['id']
+    username = request.json['username']
 
     whn = Wahana.query.filter_by(wahana=nama_w).first()
-    user = User.query.get(user_id)
-    tipe = 'debet'
-    date = datetime.now()
-    nominal = whn.harga
+    user = User.query.filter_by(username=username).first()
+    if user.saldo != 0:        
+        tipe = 'debet'
+        date = datetime.now()
+        nominal = whn.harga
 
-    new_act = Activity(whn.wahana,tipe,date,nominal,user)
-    db.session.add(new_act)
-    db.session.commit()
+        new_act = Activity(whn.wahana,tipe,date,nominal,user)
+        db.session.add(new_act)
+        db.session.commit()
 
-    x = {
-        "status":"success"
-    }
+        user.saldo -= nominal
+        db.session.commit()
+
+        x = {
+            "status":"success"
+        }
+    else:
+        x = {
+            "status":"saldo tidak cukup"
+        }
+
     return jsonify(x)
 
 if __name__ == '__main__':
