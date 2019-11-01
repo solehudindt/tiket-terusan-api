@@ -2,11 +2,13 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from datetime import datetime
+from flask_cors import CORS
 import os
 
 # Init app
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
+cors = CORS(app, resources={r"*": {"origins": "*"}})
 
 # Database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:ge3k@localhost/terusan'
@@ -40,7 +42,6 @@ class Activity(db.Model):
     activity_name = db.Column(db.String(35))
     tipe = db.Column(db.String(6))
     date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())
-    #date_time = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
     nominal = db.Column(db.Integer())
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
         nullable=False)
@@ -74,9 +75,7 @@ activitys_schema = ActivitySchema(many=True)
 
 @app.route('/')
 def index():
-    x = {
-        "status":"running"
-    }
+    x = {"status":"running"}
     return jsonify(x)
 
 ## Create a User
@@ -111,9 +110,7 @@ def topup():
     user.saldo += nominal
     db.session.commit()
 
-    x = {
-        "status":"success"
-    }
+    x = {"status":"success"}
     return jsonify(x)
 
 
@@ -142,16 +139,18 @@ def get_history(id):
 ## Login
 @app.route('/login', methods=['POST'])
 def login():
+
     iden = request.json['email']
     passwd = request.json['passwd']
-    x = {
-        "status":"email/password salah"
-    }
+    x = {"status":"email/password salah"}
     
     user = User.query.filter_by(email=iden).first()
-    if iden == user.email and passwd == user.passwd:
-        return user_schema.jsonify(user)
-    else:
+    try:
+        if iden == user.email and passwd == user.passwd:
+            return user_schema.jsonify(user)
+        else:
+            return jsonify(x)
+    except(AttributeError):
         return jsonify(x)
 
 ## Scan
@@ -174,13 +173,9 @@ def scan():
         user.saldo -= nominal
         db.session.commit()
 
-        x = {
-            "status":"success"
-        }
+        x = {"status":"success"}
     else:
-        x = {
-            "status":"saldo tidak cukup"
-        }
+        x = {"status":"saldo tidak cukup"}
 
     return jsonify(x)
 
