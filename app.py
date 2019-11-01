@@ -93,26 +93,77 @@ def add_user():
     
     return user_schema.jsonify(new_user)
 
+## Login
+@app.route('/login', methods=['POST'])
+def login():
+
+    iden = request.json['email']
+    passwd = request.json['passwd']
+    x = {"status":"email atau password salah"}
+    
+    user = User.query.filter_by(email=iden).first()
+
+    try:
+        if iden == user.email and passwd == user.passwd:
+            return user_schema.jsonify(user)
+        else:
+            return jsonify(x)
+    except(AttributeError):
+        return jsonify(x)
+
 ## topup
 @app.route('/topup', methods=['POST'])
 def topup():
     username = request.json['username']
     nominal = request.json['nominal']
-
+    x = {"status":""}
     user = User.query.filter_by(username=username).first()
     tipe = 'kredit'
     date = datetime.now()
 
-    new_act = Activity(activity_name="topup",tipe=tipe,date_time=date,nominal=nominal,owner=user)
-    db.session.add(new_act)
-    db.session.commit()
+    try:
+        if user.id:
+            new_act = Activity(activity_name="topup",tipe=tipe,date_time=date,nominal=nominal,owner=user)
+            db.session.add(new_act)
+            db.session.commit()
 
-    user.saldo += nominal
-    db.session.commit()
+            user.saldo += nominal
+            db.session.commit()
+            x["status"] = "success"
+    except(AttributeError):
+        x["status"] = "username salah"
 
-    x = {"status":"success"}
     return jsonify(x)
 
+## Scan
+@app.route('/scan', methods=['POST'])
+def scan():
+    nama_w = request.json['wahana']
+    username = request.json['username']
+    x = {"status":""}
+
+    whn = Wahana.query.filter_by(wahana=nama_w).first()
+    user = User.query.filter_by(username=username).first()
+    try:
+        if user.saldo != 0:        
+            tipe = 'debet'
+            date = datetime.now()
+            nominal = whn.harga
+
+            new_act = Activity(whn.wahana,tipe,date,nominal,user)
+            db.session.add(new_act)
+            db.session.commit()
+
+            user.saldo -= nominal
+            db.session.commit()
+
+            x["status"] = "success"
+        else:
+            x["status"] = "saldo tidak cukup"
+    except(AttributeError):
+        x["status"] = "wahana atau username tidak terdaftar"
+
+    return jsonify(x)
 
 ## Get user
 @app.route('/user/<id>', methods=['GET'])
@@ -124,60 +175,20 @@ def get_user(id):
 @app.route('/history/<id>', methods=['GET'])
 def get_history(id):
     user = User.query.get(id)
-    act = {}
-    for i in range(len(user.activities)):
-        counter = 0
-        for x in user.activities:
-            act[counter] = {"activity_name":x.activity_name,
-                        "tipe":x.tipe,
-                        "date_time":x.date_time,
-                        "nominal":x.nominal}
-            counter = counter + 1
 
-    return jsonify(act)
-
-## Login
-@app.route('/login', methods=['POST'])
-def login():
-
-    iden = request.json['email']
-    passwd = request.json['passwd']
-    x = {"status":"email/password salah"}
-    
-    user = User.query.filter_by(email=iden).first()
     try:
-        if iden == user.email and passwd == user.passwd:
-            return user_schema.jsonify(user)
-        else:
-            return jsonify(x)
+        act = []
+        for i in (user.activities):
+            x = {"activity_name":i.activity_name,
+                "tipe":i.tipe,
+                "date_time":i.date_time,
+                "nominal":i.nominal
+            }
+            act.append(x)
+        data = {"data":act}
+        return jsonify(data)
     except(AttributeError):
-        return jsonify(x)
-
-## Scan
-@app.route('/scan', methods=['POST'])
-def scan():
-    nama_w = request.json['wahana']
-    username = request.json['username']
-
-    whn = Wahana.query.filter_by(wahana=nama_w).first()
-    user = User.query.filter_by(username=username).first()
-    if user.saldo != 0:        
-        tipe = 'debet'
-        date = datetime.now()
-        nominal = whn.harga
-
-        new_act = Activity(whn.wahana,tipe,date,nominal,user)
-        db.session.add(new_act)
-        db.session.commit()
-
-        user.saldo -= nominal
-        db.session.commit()
-
-        x = {"status":"success"}
-    else:
-        x = {"status":"saldo tidak cukup"}
-
-    return jsonify(x)
+        return jsonify({"status":"Activity kosong"})
 
 if __name__ == '__main__':
     app.run(debug=True)
