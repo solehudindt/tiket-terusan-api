@@ -1,6 +1,9 @@
 from flask import Flask, jsonify, request
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+# from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import text as sa_text
 from datetime import datetime
 from flask_cors import CORS
 import os
@@ -24,8 +27,9 @@ ma = Marshmallow(app)
 # Product Class/Model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # id = db.Column(UUID(as_uuid=True), primary_key=True, server_default=sa_text("uuid_generate_v4()"))
     username = db.Column(db.String(25), unique=True)
-    passwd = db.Column(db.String(36))
+    passwd = db.Column(db.String(100))
     email = db.Column(db.String(40), unique=True)
     telepon = db.Column(db.String(13), nullable=True)
     saldo = db.Column(db.Integer(), default=0)
@@ -85,13 +89,16 @@ def add_user():
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
+
+    try:
+        new_user = User(username, generate_password_hash(passwd), email, telepon)
+        
+        db.session.add(new_user)
+        db.session.commit()
+    except:
+        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
-    new_user = User(username, passwd, email, telepon)
-    
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return user_schema.jsonify(new_user)
+    return jsonify({'status':'success'}), 200
 
 ## Login
 @app.route('/login', methods=['POST'])
@@ -104,7 +111,7 @@ def login():
     user = User.query.filter_by(email=iden).first()
 
     try:
-        if iden == user.email and passwd == user.passwd:
+        if iden == user.email and check_password_hash(user.passwd, passwd):
             return user_schema.jsonify(user)
         else:
             return jsonify(x)
@@ -186,8 +193,10 @@ def get_history(id):
             }
             act.append(x)
         data = {"data":act}
+
         return jsonify(data)
     except(AttributeError):
+
         return jsonify({"status":"Activity kosong"})
 
 if __name__ == '__main__':
