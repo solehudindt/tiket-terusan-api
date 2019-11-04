@@ -1,0 +1,51 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+Activity	../app.py	/^class Activity(db.Model):$/;"	kind:class	line:44
+ActivitySchema	../app.py	/^class ActivitySchema(ma.Schema):$/;"	kind:class	line:70
+Meta	../app.py	/^    class Meta:$/;"	kind:class	line:67
+Meta	../app.py	/^    class Meta:$/;"	kind:class	line:71
+User	../app.py	/^class User(db.Model):$/;"	kind:class	line:28
+UserSchema	../app.py	/^class UserSchema(ma.Schema):$/;"	kind:class	line:66
+Wahana	../app.py	/^class Wahana(db.Model):$/;"	kind:class	line:60
+__init__	../app.py	/^    def __init__(self, activity_name, tipe, date_time, nominal, owner):$/;"	kind:member	line:53
+__init__	../app.py	/^    def __init__(self, username, passwd, email, telepon):$/;"	kind:member	line:38
+activities	../app.py	/^    activities = db.relationship('Activity', backref='owner')$/;"	kind:variable	line:36
+activity_name	../app.py	/^    activity_name = db.Column(db.String(35))$/;"	kind:variable	line:46
+activity_schema	../app.py	/^activity_schema = ActivitySchema()$/;"	kind:variable	line:77
+activitys_schema	../app.py	/^activitys_schema = ActivitySchema(many=True)$/;"	kind:variable	line:78
+add_user	../app.py	/^def add_user():$/;"	kind:function	line:87
+app	../app.py	/^app = Flask(__name__)$/;"	kind:variable	line:12
+app.py	../app.py	1;"	kind:file	line:1
+basedir	../app.py	/^basedir = os.path.abspath(os.path.dirname(__file__))$/;"	kind:variable	line:13
+cors	../app.py	/^cors = CORS(app, resources={r"*": {"origins": "*"}})$/;"	kind:variable	line:14
+date_time	../app.py	/^    date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())$/;"	kind:variable	line:48
+db	../app.py	/^db = SQLAlchemy(app)$/;"	kind:variable	line:22
+email	../app.py	/^    email = db.Column(db.String(40), unique=True)$/;"	kind:variable	line:33
+fields	../app.py	/^        fields = ('id', 'activity_name', 'tipe', 'date_time', 'nominal')$/;"	kind:variable	line:72
+fields	../app.py	/^        fields = ('id', 'username', 'passwd', 'email', 'telepon', 'saldo')$/;"	kind:variable	line:68
+get_history	../app.py	/^def get_history(id):$/;"	kind:function	line:183
+get_user	../app.py	/^def get_user(id):$/;"	kind:function	line:177
+harga	../app.py	/^    harga = db.Column(db.Integer())$/;"	kind:variable	line:63
+id	../app.py	/^    id = db.Column(db.Integer, primary_key=True)$/;"	kind:variable	line:29
+id	../app.py	/^    id = db.Column(db.Integer, primary_key=True)$/;"	kind:variable	line:45
+id	../app.py	/^    id = db.Column(db.Integer, primary_key=True)$/;"	kind:variable	line:61
+index	../app.py	/^def index():$/;"	kind:function	line:81
+login	../app.py	/^def login():$/;"	kind:function	line:105
+ma	../app.py	/^ma = Marshmallow(app)$/;"	kind:variable	line:25
+nominal	../app.py	/^    nominal = db.Column(db.Integer())$/;"	kind:variable	line:49
+nullable	../app.py	/^        nullable=False)$/;"	kind:variable	line:51
+owner_id	../app.py	/^    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),$/;"	kind:variable	line:50
+passwd	../app.py	/^    passwd = db.Column(db.String(100))$/;"	kind:variable	line:32
+saldo	../app.py	/^    saldo = db.Column(db.Integer(), default=0)$/;"	kind:variable	line:35
+scan	../app.py	/^def scan():$/;"	kind:function	line:147
+telepon	../app.py	/^    telepon = db.Column(db.String(13), nullable=True)$/;"	kind:variable	line:34
+tipe	../app.py	/^    tipe = db.Column(db.String(6))$/;"	kind:variable	line:47
+topup	../app.py	/^def topup():$/;"	kind:function	line:123
+user_schema	../app.py	/^user_schema = UserSchema()$/;"	kind:variable	line:75
+username	../app.py	/^    username = db.Column(db.String(25), unique=True)$/;"	kind:variable	line:31
+users_schema	../app.py	/^users_schema = UserSchema(many=True)$/;"	kind:variable	line:76
+wahana	../app.py	/^    wahana = db.Column(db.String(15))$/;"	kind:variable	line:62
