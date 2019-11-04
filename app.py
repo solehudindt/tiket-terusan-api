@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-# from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import text as sa_text
 from datetime import datetime
 from flask_cors import CORS
@@ -27,19 +26,30 @@ ma = Marshmallow(app)
 # Product Class/Model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # id = db.Column(UUID(as_uuid=True), primary_key=True, server_default=sa_text("uuid_generate_v4()"))
     username = db.Column(db.String(25), unique=True)
-    passwd = db.Column(db.String(100))
     email = db.Column(db.String(40), unique=True)
-    telepon = db.Column(db.String(13), nullable=True)
+    telepon = db.Column(db.String(13))
     saldo = db.Column(db.Integer(), default=0)
+    auth = db.relationship('Auth', backref='user', uselist=False)
     activities = db.relationship('Activity', backref='owner')
     
-    def __init__(self, username, passwd, email, telepon):
+    def __init__(self, username, email, telepon):
         self.username = username
-        self.passwd = passwd
         self.email = email
         self.telepon = telepon
+
+class Auth(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(25), unique=True)
+    email = db.Column(db.String(40), unique=True)
+    passwd = db.Column(db.String(100))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __init__(self, username, email, passwd, user):
+        self.username = username
+        self.email = email
+        self.passwd = passwd
+        self.user = user
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -65,7 +75,7 @@ class Wahana(db.Model):
 # Product Schema
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'username', 'passwd', 'email', 'telepon', 'saldo')
+        fields = ('id', 'username', 'email', 'telepon', 'saldo')
 
 class ActivitySchema(ma.Schema):
     class Meta:
@@ -91,9 +101,11 @@ def add_user():
     telepon = request.json['telepon']
 
     try:
-        new_user = User(username, generate_password_hash(passwd), email, telepon)
+        new_user = User(username, email, telepon)
+        new_auth = Auth(username, email, generate_password_hash(passwd),  new_user)
         
         db.session.add(new_user)
+        db.session.add(new_auth)
         db.session.commit()
     except:
         return jsonify({'error': 'An error occurred saving the user to the database'}), 500
@@ -104,14 +116,15 @@ def add_user():
 @app.route('/login', methods=['POST'])
 def login():
 
-    iden = request.json['email']
+    iden = request.json['username']
     passwd = request.json['passwd']
     x = {"status":"email atau password salah"}
     
-    user = User.query.filter_by(email=iden).first()
+    auth = Auth.query.filter_by(username=iden).first()
+    user = User.query.filter_by(username=iden).first()
 
     try:
-        if iden == user.email and check_password_hash(user.passwd, passwd):
+        if iden == auth.username and check_password_hash(auth.passwd, passwd):
             return user_schema.jsonify(user)
         else:
             return jsonify(x)
