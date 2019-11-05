@@ -25,8 +25,8 @@ ma = Marshmallow(app)
 
 # Product Class/Model
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(25), unique=True)
+    username = db.Column(db.String(15), primary_key=True, unique=True)
+    name = db.Column(db.String(25), unique=True)
     email = db.Column(db.String(40), unique=True)
     telepon = db.Column(db.String(13))
     saldo = db.Column(db.Integer(), default=0)
@@ -40,16 +40,14 @@ class User(db.Model):
 
 class Auth(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(25), unique=True)
-    email = db.Column(db.String(40), unique=True)
+    username = db.Column(db.String(15), db.ForeignKey('user.username'))
     passwd = db.Column(db.String(100))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    # user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
 
-    def __init__(self, username, email, passwd, user):
+    def __init__(self, username, email, passwd):
         self.username = username
         self.email = email
         self.passwd = passwd
-        self.user = user
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,7 +55,7 @@ class Activity(db.Model):
     tipe = db.Column(db.String(6))
     date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())
     nominal = db.Column(db.Integer())
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    owner_id = db.Column(db.String(15), db.ForeignKey('user.username'),
         nullable=False)
 
     def __init__(self, activity_name, tipe, date_time, nominal, owner):
