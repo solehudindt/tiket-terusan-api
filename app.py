@@ -26,28 +26,28 @@ ma = Marshmallow(app)
 # Product Class/Model
 class User(db.Model):
     username = db.Column(db.String(15), primary_key=True, unique=True)
-    name = db.Column(db.String(25), unique=True)
+    name = db.Column(db.String(25), nullable=False)
     email = db.Column(db.String(40), unique=True)
     telepon = db.Column(db.String(13))
     saldo = db.Column(db.Integer(), default=0)
-    auth = db.relationship('Auth', backref='user', uselist=False)
+    auths = db.relationship('Auth', backref='user')
     activities = db.relationship('Activity', backref='owner')
     
-    def __init__(self, username, email, telepon):
+    def __init__(self, username, name, email, telepon):
         self.username = username
+        self.name = name
         self.email = email
         self.telepon = telepon
 
 class Auth(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(15), db.ForeignKey('user.username'))
     passwd = db.Column(db.String(100))
+    username = db.Column(db.String(15), db.ForeignKey('user.username'), nullable=False)
     # user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
 
-    def __init__(self, username, email, passwd):
-        self.username = username
-        self.email = email
+    def __init__(self, username, passwd):
         self.passwd = passwd
+        self.username = username
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,7 +55,7 @@ class Activity(db.Model):
     tipe = db.Column(db.String(6))
     date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())
     nominal = db.Column(db.Integer())
-    owner_id = db.Column(db.String(15), db.ForeignKey('user.username'),
+    owner_id = db.Column(db.String(15), db.ForeignKey('owner.username'),
         nullable=False)
 
     def __init__(self, activity_name, tipe, date_time, nominal, owner):
@@ -73,7 +73,7 @@ class Wahana(db.Model):
 # Product Schema
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'username', 'email', 'telepon', 'saldo')
+        fields = ('username', 'name', 'email', 'telepon', 'saldo')
 
 class ActivitySchema(ma.Schema):
     class Meta:
@@ -94,19 +94,20 @@ def index():
 @app.route('/daftar', methods=['POST'])
 def add_user():
     username = request.json['username']
+    name = request.json['nama']
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
 
-    try:
-        new_user = User(username, email, telepon)
-        new_auth = Auth(username, email, generate_password_hash(passwd),  new_user)
+    # try:
+    new_user = User(username, name, email, telepon)
+    new_auth = Auth(new_user, generate_password_hash(passwd))
         
-        db.session.add(new_user)
-        db.session.add(new_auth)
-        db.session.commit()
-    except:
-        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
+    db.session.add(new_user)
+    db.session.add(new_auth)
+    db.session.commit()
+    # except:
+        # return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
     return jsonify({'status':'success'}), 200
 
