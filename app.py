@@ -30,7 +30,7 @@ class User(db.Model):
     email = db.Column(db.String(40), unique=True)
     telepon = db.Column(db.String(13))
     saldo = db.Column(db.Integer(), default=0)
-    auths = db.relationship('Auth', backref='user')
+    auth = db.relationship('Auth', backref='user', uselist=False)
     activities = db.relationship('Activity', backref='owner')
     
     def __init__(self, username, name, email, telepon):
@@ -42,12 +42,12 @@ class User(db.Model):
 class Auth(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     passwd = db.Column(db.String(100))
-    username = db.Column(db.String(15), db.ForeignKey('user.username'), nullable=False)
-    # user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
+    # username = db.Column(db.String(15), db.ForeignKey('user.username'))
+    user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
 
-    def __init__(self, username, passwd):
+    def __init__(self, passwd, user_id):
         self.passwd = passwd
-        self.username = username
+        self.user_id = user_id
 
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,7 +55,7 @@ class Activity(db.Model):
     tipe = db.Column(db.String(6))
     date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())
     nominal = db.Column(db.Integer())
-    owner_id = db.Column(db.String(15), db.ForeignKey('owner.username'),
+    owner_id = db.Column(db.String(15), db.ForeignKey('user.username'),
         nullable=False)
 
     def __init__(self, activity_name, tipe, date_time, nominal, owner):
@@ -101,7 +101,7 @@ def add_user():
 
     # try:
     new_user = User(username, name, email, telepon)
-    new_auth = Auth(new_user, generate_password_hash(passwd))
+    new_auth = Auth(generate_password_hash(passwd), username)
         
     db.session.add(new_user)
     db.session.add(new_auth)
@@ -141,7 +141,7 @@ def topup():
     date = datetime.now()
 
     try:
-        if user.id:
+        if user.username:
             new_act = Activity(activity_name="topup",tipe=tipe,date_time=date,nominal=nominal,owner=user)
             db.session.add(new_act)
             db.session.commit()
