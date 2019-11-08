@@ -99,15 +99,15 @@ def add_user():
     email = request.json['email']
     telepon = request.json['telepon']
 
-    # try:
-    new_user = User(username, name, email, telepon)
-    new_auth = Auth(generate_password_hash(passwd), username)
-        
-    db.session.add(new_user)
-    db.session.add(new_auth)
-    db.session.commit()
-    # except:
-        # return jsonify({'error': 'An error occurred saving the user to the database'}), 500
+    try:
+        new_user = User(username, name, email, telepon)
+        new_auth = Auth(generate_password_hash(passwd), username)
+            
+        db.session.add(new_user)
+        db.session.add(new_auth)
+        db.session.commit()
+    except:
+        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
     return jsonify({'status':'success'}), 200
 
@@ -149,6 +149,7 @@ def topup():
             user.saldo += nominal
             db.session.commit()
             x["status"] = "success"
+
     except(AttributeError):
         x["status"] = "username salah"
 
@@ -179,6 +180,7 @@ def scan():
             x["status"] = "success"
         else:
             x["status"] = "saldo tidak cukup"
+            
     except(AttributeError):
         x["status"] = "wahana atau username tidak terdaftar"
 
