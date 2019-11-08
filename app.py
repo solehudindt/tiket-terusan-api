@@ -119,11 +119,11 @@ def login():
     passwd = request.json['passwd']
     x = {"status":"email atau password salah"}
     
-    auth = Auth.query.filter_by(username=iden).first()
+    auth = Auth.query.filter_by(user_id=iden).first()
     user = User.query.filter_by(username=iden).first()
 
     try:
-        if iden == auth.username and check_password_hash(auth.passwd, passwd):
+        if iden == auth.user_id and check_password_hash(auth.passwd, passwd):
             return user_schema.jsonify(user)
         else:
             return jsonify(x)
@@ -165,7 +165,10 @@ def scan():
     whn = Wahana.query.filter_by(wahana=nama_w).first()
     user = User.query.filter_by(username=username).first()
     try:
-        if user.saldo != 0:        
+        if user.saldo < whn.harga:
+            x["status"] = "saldo tidak cukup"
+            
+        elif user.saldo != 0:        
             tipe = 'debet'
             date = datetime.now()
             nominal = whn.harga
@@ -178,9 +181,10 @@ def scan():
             db.session.commit()
 
             x["status"] = "success"
+
         else:
             x["status"] = "saldo tidak cukup"
-            
+
     except(AttributeError):
         x["status"] = "wahana atau username tidak terdaftar"
 
