@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from sqlalchemy import text as sa_text
 from datetime import datetime
 from flask_cors import CORS
 import os
@@ -98,18 +97,25 @@ def add_user():
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
+    x = {"status":"email atau password salah"}
 
     try:
+        all_user = User.query.all()
         new_user = User(username, name, email, telepon)
         new_auth = Auth(generate_password_hash(passwd), username)
-            
-        db.session.add(new_user)
-        db.session.add(new_auth)
-        db.session.commit()
+
+        for i,x in enumerate(all_user):
+            if x[i].username == username:
+                x["status"] = "username sudah ada"
+            else:
+                db.session.add(new_user)
+                db.session.add(new_auth)
+                db.session.commit()
+                x["status"] = "success"
     except:
-        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
+       return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
-    return jsonify({'status':'success'}), 200
+    return jsonify(x), 200
 
 ## Login
 @app.route('/login', methods=['POST'])
@@ -167,7 +173,7 @@ def scan():
     try:
         if user.saldo < whn.harga:
             x["status"] = "saldo tidak cukup"
-            
+
         elif user.saldo != 0:        
             tipe = 'debet'
             date = datetime.now()
