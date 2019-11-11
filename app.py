@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 from flask_marshmallow import Marshmallow
 from datetime import datetime
 from flask_cors import CORS
@@ -100,18 +101,19 @@ def add_user():
     x = {"status":"email atau password salah"}
 
     try:
-        all_user = User.query.all()
-        new_user = User(username, name, email, telepon)
-        new_auth = Auth(generate_password_hash(passwd), username)
+        user = User.query.filter_by(username=username).first() is not None
+        if user:
+            x["status"] = "username sudah ada"
+        else:
+            new_user = User(username, name, email, telepon)
+            new_auth = Auth(generate_password_hash(passwd), username)
 
-        for i,x in enumerate(all_user):
-            if x[i].username == username:
-                x["status"] = "username sudah ada"
-            else:
-                db.session.add(new_user)
-                db.session.add(new_auth)
-                db.session.commit()
-                x["status"] = "success"
+            db.session.add(new_user)
+            db.session.add(new_auth)
+            db.session.commit()
+            x["status"] = "success"
+    except IntegrityError:
+        x["status"] = "email sudah dipakai"
     except:
        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
