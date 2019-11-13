@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 from flask_marshmallow import Marshmallow
-from sqlalchemy import text as sa_text
 from datetime import datetime
 from flask_cors import CORS
 import os
@@ -26,16 +26,18 @@ ma = Marshmallow(app)
 # Product Class/Model
 class User(db.Model):
     username = db.Column(db.String(15), primary_key=True, unique=True)
-    name = db.Column(db.String(25), nullable=False)
+    nama_dep = db.Column(db.String(15), nullable=False)
+    nama_bel = db.Column(db.String(10))
     email = db.Column(db.String(40), unique=True)
     telepon = db.Column(db.String(13))
     saldo = db.Column(db.Integer(), default=0)
     auth = db.relationship('Auth', backref='user', uselist=False)
     activities = db.relationship('Activity', backref='owner')
     
-    def __init__(self, username, name, email, telepon):
+    def __init__(self, username, nama_dep, nama_bel, email, telepon):
         self.username = username
-        self.name = name
+        self.nama_dep = nama_dep
+        self.nama_bel = nama_bel
         self.email = email
         self.telepon = telepon
 
@@ -73,7 +75,7 @@ class Wahana(db.Model):
 # Product Schema
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('username', 'name', 'email', 'telepon', 'saldo')
+        fields = ('username', 'nama_dep', 'nama_bel', 'email', 'telepon', 'saldo')
 
 class ActivitySchema(ma.Schema):
     class Meta:
@@ -94,22 +96,31 @@ def index():
 @app.route('/daftar', methods=['POST'])
 def add_user():
     username = request.json['username']
-    name = request.json['nama']
+    nama_dep = request.json['nama_dep']
+    nama_bel = request.json['nama_bel']
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
+    x = {"status":""}
 
     try:
-        new_user = User(username, name, email, telepon)
-        new_auth = Auth(generate_password_hash(passwd), username)
-            
-        db.session.add(new_user)
-        db.session.add(new_auth)
-        db.session.commit()
+        user = User.query.filter_by(username=username).first() is not None
+        if user:
+            x["status"] = "username sudah ada"
+        else:
+            new_user = User(username, nama_dep, nama_bel, email, telepon)
+            new_auth = Auth(generate_password_hash(passwd), username)
+
+            db.session.add(new_user)
+            db.session.add(new_auth)
+            db.session.commit()
+            x["status"] = "success"
+    except IntegrityError:
+        x["status"] = "email sudah dipakai"
     except:
-        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
+       return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
-    return jsonify({'status':'success'}), 200
+    return jsonify(x), 200
 
 ## Login
 @app.route('/login', methods=['POST'])
@@ -129,6 +140,8 @@ def login():
             return jsonify(x)
     except(AttributeError):
         return jsonify(x)
+    except:
+        return jsonify({"status":"terjadi error"})
 
 ## topup
 @app.route('/topup', methods=['POST'])
@@ -141,7 +154,7 @@ def topup():
     date = datetime.now()
 
     try:
-        if user.username:
+        if user.username and nominal > 0:
             new_act = Activity(activity_name="topup",tipe=tipe,date_time=date,nominal=nominal,owner=user)
             db.session.add(new_act)
             db.session.commit()
@@ -149,6 +162,8 @@ def topup():
             user.saldo += nominal
             db.session.commit()
             x["status"] = "success"
+        else:
+            x["status"] = "nominal terlalu kecil"
 
     except(AttributeError):
         x["status"] = "username salah"
@@ -167,7 +182,7 @@ def scan():
     try:
         if user.saldo < whn.harga:
             x["status"] = "saldo tidak cukup"
-            
+
         elif user.saldo != 0:        
             tipe = 'debet'
             date = datetime.now()
