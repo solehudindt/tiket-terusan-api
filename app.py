@@ -68,7 +68,7 @@ class Activity(db.Model):
         self.owner = owner
 
 class Wahana(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id_w = db.Column(db.String(5), primary_key=True)
     wahana = db.Column(db.String(15))
     harga = db.Column(db.Integer())
 
@@ -187,11 +187,11 @@ def topup():
 ## Scan
 @app.route('/scan', methods=['POST'])
 def scan():
-    nama_w = request.json['wahana']
+    id_w = request.json['id_W']
     username = request.json['username']
     x = {"status":""}
 
-    whn = Wahana.query.filter_by(wahana=nama_w).first()
+    whn = Wahana.query.filter_by(id_w=id_w).first()
     user = User.query.filter_by(username=username).first()
     try:
         if user.saldo < whn.harga:
