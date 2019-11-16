@@ -29,7 +29,7 @@ class User(db.Model):
     nama_dep = db.Column(db.String(15), nullable=False)
     nama_bel = db.Column(db.String(10))
     email = db.Column(db.String(40), unique=True)
-    telepon = db.Column(db.String(13))
+    telepon = db.Column(db.String(13), unique=True)
     saldo = db.Column(db.Integer(), default=0)
     auth = db.relationship('Auth', backref='user', uselist=False)
     activities = db.relationship('Activity', backref='owner')
@@ -68,7 +68,7 @@ class Activity(db.Model):
         self.owner = owner
 
 class Wahana(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id_w = db.Column(db.String(5), primary_key=True)
     wahana = db.Column(db.String(15))
     harga = db.Column(db.Integer())
 
@@ -146,10 +146,24 @@ def login():
 ## topup
 @app.route('/topup', methods=['POST'])
 def topup():
-    username = request.json['username']
-    nominal = request.json['nominal']
+    telp = request.json['telp']
+    jenis = request.json['jenis']
+    nominal = 0
+    if jenis == 1:
+        nominal = 100000
+    elif jenis == 2:
+        nominal = 50000
+    elif jenis == 3:
+        nominal = 25000
+    elif jenis == 4:
+        nominal = 10000
+    elif jenis == 5:
+        nominal = 5000
+    else:
+        return jsonify({"status":"jenis salah"})
+
     x = {"status":""}
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(telepon=telp).first()
     tipe = 'kredit'
     date = datetime.now()
 
@@ -173,11 +187,11 @@ def topup():
 ## Scan
 @app.route('/scan', methods=['POST'])
 def scan():
-    nama_w = request.json['wahana']
+    id_w = request.json['id_W']
     username = request.json['username']
     x = {"status":""}
 
-    whn = Wahana.query.filter_by(wahana=nama_w).first()
+    whn = Wahana.query.filter_by(id_w=id_w).first()
     user = User.query.filter_by(username=username).first()
     try:
         if user.saldo < whn.harga:
