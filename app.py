@@ -160,7 +160,7 @@ def topup():
     elif jenis == 5:
         nominal = 5000
     else:
-        return jsonify({"status":"jenis salah"})
+        return jsonify({"status":"jenis nominal tidak tersedia"})
 
     x = {"status":""}
     user = User.query.filter_by(telepon=telp).first()
