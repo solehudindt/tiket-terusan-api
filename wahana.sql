@@ -23,11 +23,11 @@ DROP TABLE IF EXISTS `wahana`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `wahana` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_w` varchar(5) NOT NULL,
   `wahana` varchar(15) DEFAULT NULL,
   `harga` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+  PRIMARY KEY (`id_w`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -36,7 +36,7 @@ CREATE TABLE `wahana` (
 
 LOCK TABLES `wahana` WRITE;
 /*!40000 ALTER TABLE `wahana` DISABLE KEYS */;
-INSERT INTO `wahana` VALUES (1,'kora-kora',10000),(2,'Bianglala',5000),(3,'Hysteria',15000),(4,'Halilintar',15000),(5,'Ontang - anting',10000),(6,'Istana Boneka',10000),(7,'Niagara',5000),(8,'Arung jeram',10000);
+INSERT INTO `wahana` VALUES ('A0001','Hysteria',15000),('A0002','Halilintar',15000),('A0003','Tornado',15000),('B0001','Kora - Kora',10000),('B0002','Ontang - Anting',10000),('B0003','Istana Boneka',10000),('B0004','Arung jeram',10000),('C0001','Bianglala',5000),('C0002','Niagara',5000),('C0003','Turangga Rangga',5000);
 /*!40000 ALTER TABLE `wahana` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -49,4 +49,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-10-28 22:18:02
+-- Dump completed on 2019-11-17 21:34:21

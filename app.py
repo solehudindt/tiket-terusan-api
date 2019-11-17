@@ -57,7 +57,7 @@ class Activity(db.Model):
     tipe = db.Column(db.String(6))
     date_time = db.Column(db.DateTime, nullable=False, default=db.func.now())
     nominal = db.Column(db.Integer())
-    owner_id = db.Column(db.String(15), db.ForeignKey('user.username'),
+    owner_id = db.Column(db.String(20), db.ForeignKey('user.username'),
         nullable=False)
 
     def __init__(self, activity_name, tipe, date_time, nominal, owner):
