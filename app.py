@@ -187,11 +187,11 @@ def topup():
 ## Scan
 @app.route('/scan', methods=['POST'])
 def scan():
-    id_w = request.json['id_W']
+    id_w = request.json['qr']
     username = request.json['username']
     x = {"status":""}
 
-    whn = Wahana.query.filter_by(id_w=id_w).first()
+    whn = Wahana.query.get(id_w)
     user = User.query.filter_by(username=username).first()
     try:
         if user.saldo < whn.harga:
@@ -214,8 +214,8 @@ def scan():
         else:
             x["status"] = "saldo tidak cukup"
 
-    except(AttributeError):
-        x["status"] = "wahana atau username tidak terdaftar"
+    except AttributeError:
+        x["status"] = "wahana tidak terdaftar"
 
     return jsonify(x)
 
