@@ -189,13 +189,13 @@ def topup():
 def scan():
     id_w = request.json['qr']
     username = request.json['username']
-    x = {"status":""}
+    x = {}
 
     whn = Wahana.query.get(id_w)
     user = User.query.filter_by(username=username).first()
     try:
         if user.saldo < whn.harga:
-            x["status"] = "saldo tidak cukup"
+            x["message"] = "saldo tidak cukup"
 
         elif user.saldo != 0:        
             tipe = 'debet'
@@ -209,7 +209,14 @@ def scan():
             user.saldo -= nominal
             db.session.commit()
 
-            x["status"] = "success"
+            x = {
+                "status":True,
+                "message":"Scan Berhasil",
+                "activity_name":whn.wahana,
+                "type":"debet",
+                "saldo":user.saldo,
+                "date":date
+            }
 
         else:
             x["status"] = "saldo tidak cukup"
@@ -239,7 +246,11 @@ def get_history(id):
                 "nominal":i.nominal
             }
             act.append(x)
-        data = {"data":act}
+        data = {
+            "status":True,
+            "message":"Activity Ditemukan",
+            "data":act
+            }
 
         return jsonify(data)
     except(AttributeError):
