@@ -44,7 +44,6 @@ class User(db.Model):
 class Auth(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     passwd = db.Column(db.String(100))
-    # username = db.Column(db.String(15), db.ForeignKey('user.username'))
     user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
 
     def __init__(self, passwd, user_id):
@@ -101,12 +100,15 @@ def add_user():
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
-    x = {"status":""}
+    x = {
+        "status":True,
+        "message":"Register berhasil",
+    }
 
     try:
         user = User.query.filter_by(username=username).first() is not None
         if user:
-            x["status"] = "username sudah ada"
+            x["message"] = "username sudah ada"
         else:
             new_user = User(username, nama_dep, nama_bel, email, telepon)
             new_auth = Auth(generate_password_hash(passwd), username)
@@ -114,9 +116,9 @@ def add_user():
             db.session.add(new_user)
             db.session.add(new_auth)
             db.session.commit()
-            x["status"] = "success"
+
     except IntegrityError:
-        x["status"] = "email sudah dipakai"
+        x["message"] = "email sudah dipakai"
     except:
        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
@@ -213,9 +215,7 @@ def scan():
                 "status":True,
                 "message":"Scan Berhasil",
                 "activity_name":whn.wahana,
-                "type":"debet",
-                "saldo":user.saldo,
-                "date":date
+                "saldo":user.saldo
             }
 
         else:
