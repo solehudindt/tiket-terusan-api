@@ -42,7 +42,6 @@ class User(db.Model):
         self.telepon = telepon
 
 class Auth(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
     passwd = db.Column(db.String(100))
     user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
 
@@ -128,12 +127,12 @@ def add_user():
 @app.route('/login', methods=['POST'])
 def login():
 
-    iden = request.json['username']
+    telepon = request.json['telepon']
     passwd = request.json['passwd']
     x = {"status":"email atau password salah"}
     
-    auth = Auth.query.filter_by(user_id=iden).first()
-    user = User.query.filter_by(username=iden).first()
+    auth = Auth.query.filter_by(passwd=check_password_hash(auth.passwd, passwd)).first()
+    user = User.query.filter_by(telepon=telepon).first()
 
     try:
         if iden == auth.user_id and check_password_hash(auth.passwd, passwd):
