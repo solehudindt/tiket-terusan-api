@@ -42,9 +42,7 @@ class User(db.Model):
         self.telepon = telepon
 
 class Auth(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
     passwd = db.Column(db.String(100))
-    # username = db.Column(db.String(15), db.ForeignKey('user.username'))
     user_id = db.Column(db.String(15), db.ForeignKey('user.username'))
 
     def __init__(self, passwd, user_id):
@@ -101,12 +99,15 @@ def add_user():
     passwd = request.json['passwd']
     email = request.json['email']
     telepon = request.json['telepon']
-    x = {"status":""}
+    x = {
+        "status":True,
+        "message":"Register berhasil",
+    }
 
     try:
         user = User.query.filter_by(username=username).first() is not None
         if user:
-            x["status"] = "username sudah ada"
+            x["message"] = "username sudah ada"
         else:
             new_user = User(username, nama_dep, nama_bel, email, telepon)
             new_auth = Auth(generate_password_hash(passwd), username)
@@ -114,9 +115,9 @@ def add_user():
             db.session.add(new_user)
             db.session.add(new_auth)
             db.session.commit()
-            x["status"] = "success"
+
     except IntegrityError:
-        x["status"] = "email sudah dipakai"
+        x["message"] = "email sudah dipakai"
     except:
        return jsonify({'error': 'An error occurred saving the user to the database'}), 500
     
@@ -126,12 +127,12 @@ def add_user():
 @app.route('/login', methods=['POST'])
 def login():
 
-    iden = request.json['username']
+    telepon = request.json['telepon']
     passwd = request.json['passwd']
     x = {"status":"email atau password salah"}
     
-    auth = Auth.query.filter_by(user_id=iden).first()
-    user = User.query.filter_by(username=iden).first()
+    auth = Auth.query.filter_by(passwd=check_password_hash(auth.passwd, passwd)).first()
+    user = User.query.filter_by(telepon=telepon).first()
 
     try:
         if iden == auth.user_id and check_password_hash(auth.passwd, passwd):
@@ -160,7 +161,7 @@ def topup():
     elif jenis == 5:
         nominal = 5000
     else:
-        return jsonify({"status":"jenis salah"})
+        return jsonify({"status":"jenis nominal tidak tersedia"})
 
     x = {"status":""}
     user = User.query.filter_by(telepon=telp).first()
@@ -189,13 +190,13 @@ def topup():
 def scan():
     id_w = request.json['qr']
     username = request.json['username']
-    x = {"status":""}
+    x = {}
 
     whn = Wahana.query.get(id_w)
     user = User.query.filter_by(username=username).first()
     try:
         if user.saldo < whn.harga:
-            x["status"] = "saldo tidak cukup"
+            x["message"] = "saldo tidak cukup"
 
         elif user.saldo != 0:        
             tipe = 'debet'
@@ -209,7 +210,12 @@ def scan():
             user.saldo -= nominal
             db.session.commit()
 
-            x["status"] = "success"
+            x = {
+                "status":True,
+                "message":"Scan Berhasil",
+                "activity_name":whn.wahana,
+                "saldo":user.saldo
+            }
 
         else:
             x["status"] = "saldo tidak cukup"
@@ -239,7 +245,11 @@ def get_history(id):
                 "nominal":i.nominal
             }
             act.append(x)
-        data = {"data":act}
+        data = {
+            "status":True,
+            "message":"Activity Ditemukan",
+            "data":act
+            }
 
         return jsonify(data)
     except(AttributeError):
